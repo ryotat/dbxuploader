@@ -39,12 +39,29 @@ def check_path_exist(dbx, path):
 def getext(fn):
     return fn.split('.')[-1].lower()
 
+def getexifdatetime(fn):
+    with open(fn,'rb') as f:
+        tags=exifread.process_file(f, details=False)
+    if 'Image DateTime' in tags:
+        return datetime.strptime(tags['Image DateTime'].printable, '%Y:%m:%d %H:%M:%S')
+    elif 'EXIF DateTimeOriginal' in tags:
+        dtstring=tags['EXIF DateTimeOriginal'].printable
+        return datetime.strptime(dtstring, '%Y:%m:%d %H:%M:%S')
+    else:
+        print 'Exif does not contain datetime.'
+        return None
+
+def getwpdatetime(fn):
+    basename=os.path.basename(fn)
+    dtstring='_'.join(basename.split('.')[0].split('_')[1:-1])
+    return datetime.strptime(dtstring, '%Y%m%d_%H_%M_%S')
+
 if __name__ == '__main__':
     dir = sys.argv[1]
     dbx=dropbox.Dropbox(config['token'])
 
     jpeg_file_exts=['jpg']
-    mov_file_exts=['mov']
+    mov_file_exts=['mov','mp4']
     files=[]
     for dirpath, dirs, fns in os.walk(dir):
         files += [dirpath+'/'+fn for fn in fns
@@ -54,16 +71,17 @@ if __name__ == '__main__':
     que = {}
     for file in files:
         print file
+        basename=os.path.basename(file)
         ext=getext(file)
         if ext in jpeg_file_exts:
-            with open(file,'rb') as f:
-                tags=exifread.process_file(f, details=False)
-            if 'Image DateTime' not in tags:
-                print 'Exif does not contain datetime.'
+            date_taken=getexifdatetime(file)
+            if date_taken is None:
                 continue
-            date_taken=datetime.strptime(tags['Image DateTime'].printable, '%Y:%m:%d %H:%M:%S')
         elif ext in mov_file_exts:
-            date_taken=parsequicktime.get_local_modified_time(file)
+            if basename.startswith('WP_'):
+                date_taken=getwpdatetime(file)
+            else:
+                date_taken=parsequicktime.get_local_modified_time(file)
         orig_path = format_original_dest(date_taken, ext)
         final_path = format_final_dest(date_taken, ext)
         # print 'orig_path=%s' % orig_path

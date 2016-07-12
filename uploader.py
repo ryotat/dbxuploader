@@ -62,8 +62,8 @@ if __name__ == '__main__':
 
     jpeg_file_exts=['jpg']
     mov_file_exts=['mov','mp4']
-    if os.path.isfile(dir):
-        files = [dir]
+    if not os.path.isdir(dir):
+        files = glob.glob(dir)
     else:
         files=[]
         for dirpath, dirs, fns in os.walk(dir):

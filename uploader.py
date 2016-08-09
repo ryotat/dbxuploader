@@ -62,11 +62,14 @@ if __name__ == '__main__':
 
     jpeg_file_exts=['jpg']
     mov_file_exts=['mov','mp4']
-    files=[]
-    for dirpath, dirs, fns in os.walk(dir):
-        files += [dirpath+'/'+fn for fn in fns
-                  if getext(fn) in jpeg_file_exts
-                  or getext(fn) in mov_file_exts]
+    if os.path.isdir(dir):
+        files=[]
+        for dirpath, dirs, fns in os.walk(dir):
+            files += [dirpath+'/'+fn for fn in fns
+                      if getext(fn) in jpeg_file_exts
+                      or getext(fn) in mov_file_exts]
+    else:
+        files = [dir]
     print len(files)
     que = {}
     for file in files:
@@ -113,6 +116,13 @@ if __name__ == '__main__':
     if res=='y':
         for path in que:
             file = que[path]
+            file_size = os.path.getsize(file)
+            print file_size
+            if 'file_size_limit' in config:
+                file_size_limit = int(config['file_size_limit'])
+                if file_size>file_size_limit:
+                    print 'Skipping %s because its size is above %d MB' % (file, file_size_limit/1024/1024)
+                    continue
             folder_path = '/'.join(path.split('/')[:-1])
             if check_path_exist(dbx, folder_path) is None:
                 dbx.files_create_folder(folder_path)

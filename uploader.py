@@ -62,14 +62,14 @@ if __name__ == '__main__':
 
     jpeg_file_exts=['jpg']
     mov_file_exts=['mov','mp4']
-    if os.path.isdir(dir):
+    if not os.path.isdir(dir):
+        files = glob.glob(dir)
+    else:
         files=[]
         for dirpath, dirs, fns in os.walk(dir):
             files += [dirpath+'/'+fn for fn in fns
                       if getext(fn) in jpeg_file_exts
                       or getext(fn) in mov_file_exts]
-    else:
-        files = [dir]
     print len(files)
     que = {}
     for file in files:

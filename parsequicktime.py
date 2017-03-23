@@ -13,6 +13,7 @@
 # - http://developer.apple.com/library/mac/#documentation/QuickTime/QTFF/QTFFChap2/qtff2.html
 # - http://www.sno.phy.queensu.ca/~phil/exiftool/TagNames/QuickTime.html
 
+from __future__ import print_function
 import datetime
 import os.path
 import struct
@@ -31,8 +32,8 @@ def parse_mvhd(f, length):
     f.read(length-12)
     created_time = adjust_epoch_time(ctime)
     modified_time = adjust_epoch_time(mtime)
-    print 'Created at %s: (%d)' %(created_time, ctime)
-    print 'Modified at %s: (%d)' %(modified_time, mtime)
+    print('Created at %s: (%d)' %(created_time, ctime))
+    print('Modified at %s: (%d)' %(modified_time, mtime))
 
     return modified_time.replace(tzinfo=pytz.utc)
 
@@ -55,7 +56,7 @@ def parse_meta_ilst(f, length, keys):
         item_atom_len, key=struct.unpack('>II', f.read(8))
         al, adata=struct.unpack('>I4s', f.read(8))
         type, locale, val=struct.unpack('>I4s%ds'%(al-16), f.read(al-8))
-        print key, type, locale, val
+        print(key, type, locale, val)
         if keys[int(key)-1]=='com.apple.quicktime.creationdate':
             ctime=iso8601.parse_date(val)
         n += item_atom_len

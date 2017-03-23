@@ -1,10 +1,12 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+from __future__ import print_function
 import sys
 import os
 from datetime import datetime
 import glob
+from six.moves import input
 
 import exifread
 import parsequicktime
@@ -48,7 +50,7 @@ def getexifdatetime(fn):
         dtstring=tags['EXIF DateTimeOriginal'].printable
         return datetime.strptime(dtstring, '%Y:%m:%d %H:%M:%S')
     else:
-        print 'Exif does not contain datetime.'
+        print('Exif does not contain datetime.')
         return None
 
 def getwpdatetime(fn):
@@ -70,10 +72,10 @@ if __name__ == '__main__':
             files += [dirpath+'/'+fn for fn in fns
                       if getext(fn) in jpeg_file_exts
                       or getext(fn) in mov_file_exts]
-    print len(files)
+    print(len(files))
     que = {}
     for file in files:
-        print file
+        print(file)
         basename=os.path.basename(file)
         ext=getext(file)
         if ext in jpeg_file_exts:
@@ -87,13 +89,13 @@ if __name__ == '__main__':
                 date_taken=parsequicktime.get_local_modified_time(file)
         orig_path = format_original_dest(date_taken, ext)
         final_path = format_final_dest(date_taken, ext)
-        # print 'orig_path=%s' % orig_path
-        # print 'final_path=%s' % final_path
+        # print('orig_path=%s' % orig_path)
+        # print('final_path=%s' % final_path)
         if check_path_exist(dbx, orig_path) is not None:
-            print 'Found %s' % orig_path
+            print('Found %s' % orig_path)
             continue
         if check_path_exist(dbx, final_path) is not None:
-            print 'Found %s' % final_path
+            print('Found %s' % final_path)
             continue
         if getext(file) in mov_file_exts:
             search_pattern = date_taken.strftime('%Y-%m-%d')+'*.'+ext
@@ -102,9 +104,9 @@ if __name__ == '__main__':
             matches = [m for m in out.matches if m.metadata.size==local_file_size]
             if len(matches)>0:
                 m=matches[0]
-                print 'Found %s with the same size' % m.metadata.name
+                print('Found %s with the same size' % m.metadata.name)
                 continue
-        print '%s does not exist.' % os.path.basename(file)
+        print('%s does not exist.' % os.path.basename(file))
         que[final_path]=file # there might be more than one file with the same content
 
     if len(que)==0:
@@ -112,20 +114,20 @@ if __name__ == '__main__':
 
     num_jpegs=len([k for k in que.keys() if getext(k) in jpeg_file_exts])
     num_movs=len([k for k in que.keys() if getext(k) in mov_file_exts])
-    res=raw_input('%d files (%d images and %d movies) to be uploaded. Proceed (y/n)?' % (len(que), num_jpegs, num_movs))
+    res=input('%d files (%d images and %d movies) to be uploaded. Proceed (y/n)?' % (len(que), num_jpegs, num_movs))
     if res=='y':
         for path in que:
             file = que[path]
             file_size = os.path.getsize(file)
-            print file_size
+            print(file_size)
             if 'file_size_limit' in config:
                 file_size_limit = int(config['file_size_limit'])
                 if file_size>file_size_limit:
-                    print 'Skipping %s because its size is above %d MB' % (file, file_size_limit/1024/1024)
+                    print('Skipping %s because its size is above %d MB' % (file, file_size_limit/1024/1024))
                     continue
             folder_path = '/'.join(path.split('/')[:-1])
             if check_path_exist(dbx, folder_path) is None:
                 dbx.files_create_folder(folder_path)
-            print 'Uploading %s as %s' % (file, path)
+            print('Uploading %s as %s' % (file, path))
             with open(file,'rb') as f:
-                dbx.files_upload(f, path)
+                dbx.files_upload(f.read(), path)
